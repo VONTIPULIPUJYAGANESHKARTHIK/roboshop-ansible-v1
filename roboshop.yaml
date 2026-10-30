@@ -43,5 +43,3 @@
       loop: "{{ ec2_output.results }}"
       when:
         - action == "create"
-        - item.instances is defined
-        - item.instances | length > 0
