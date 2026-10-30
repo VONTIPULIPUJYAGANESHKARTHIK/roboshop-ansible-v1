@@ -7,7 +7,7 @@
       - mongodb
       - redis
       - mysql
-      - rabbitMQ
+      - rabbitmq
 
     action: create
     domain_name: gcart.store
@@ -15,6 +15,7 @@
     region: us-east-1
 
   tasks:
+    # Step 1: Create EC2 instances
     - name: Create EC2 instances
       amazon.aws.ec2_instance:
         name: "roboshop-{{ item }}"
@@ -29,6 +30,23 @@
       when: action == "create"
       register: ec2_output
 
-    - name: print ec2 creation output
+    # Step 2: Print EC2 creation output
+    - name: Print EC2 instance details
       debug:
-        msg: "{{ ec2_output }}"
+        msg: "{{ ec2_output.results }}"
+
+    # Step 3: Create Route 53 DNS records
+    - name: Create Route 53 records
+      amazon.aws.route53:
+        state: present
+        zone: "{{ domain_name }}"
+        record: "{{ item.item }}.{{ domain_name }}"
+        type: A
+        ttl: 1
+        value: "{{ item.instances[0].private_ip_address }}"
+        overwrite: true
+      loop: "{{ ec2_output.results }}"
+      when:
+        - action == "create"
+        - item.instances is defined
+        - item.instances | length > 0
