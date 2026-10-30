@@ -7,7 +7,7 @@
       - mongodb
       - redis
       - mysql
-      - rabbitmq
+      - rabbitMQ
 
     action: create
     domain_name: gcart.store
