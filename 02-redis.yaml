@@ -1,0 +1,11 @@
+- name: configure redis server
+  hosts: local
+  become: yes
+  tasks:
+    - name: enable redis 7
+      command: dnf module enable redis:7 -y
+
+    - nmae: install redis
+      package:
+        name: redis
+        state: present
