@@ -1,22 +1,15 @@
-- name: Create EC2 instances and R53 records
+- name: create ec2 instances and r53 records
   hosts: local
   connection: local
-
   vars:
-    instances:
-      - mongodb
-      - redis
-      - mysql
-      - rabbitmq
-
+    # ansible-playbook roboshop.yaml -e "instances=['mongodb', 'redis']"
+    # ansible-playbook roboshop.yaml -e "action=delete"
+    instances: ["mongodb", "redis", "mysql", "rabbitmq"]
     action: create
-    domain_name: gcart.store
+    domain_name: daws92s.store
     ami_id: ami-0055977a6e828a4f4
-    region: us-east-1
-
   tasks:
-    # Step 1: Create EC2 instances
-    - name: Create EC2 instances
+    - name: create ec2 instance
       amazon.aws.ec2_instance:
         name: "roboshop-{{ item }}"
         image_id: "{{ ami_id }}"
@@ -24,29 +17,23 @@
         security_groups:
           - roboshop-common
           - "roboshop-{{ item }}"
-        region: "{{ region }}"
-        state: present
+        region: us-east-1
       loop: "{{ instances }}"
       when: action == "create"
       register: ec2_output
 
-    # Step 2: Print EC2 creation output
-    - name: Print EC2 instance details
-      debug:
-        msg: "{{ ec2_output.results }}"
+    # - name: print ec2 creation output
+    #   debug:
+    #     msg: "{{ ec2_output }}"
 
-    # Step 3: Create Route 53 DNS records
-    - name: Create Route 53 records
+    - name: create R53 record
       amazon.aws.route53:
         state: present
         zone: "{{ domain_name }}"
-        record: "{{ item.item }}.{{ domain_name }}"
+        record: "{{ item.item }}.{{ domain_name }}" # mongodb.daws92s.store
         type: A
         ttl: 1
         value: "{{ item.instances[0].private_ip_address }}"
         overwrite: true
       loop: "{{ ec2_output.results }}"
-      when:
-        - action == "create"
-        - item.instances is defined
-        - item.instances | length > 0
+      when: action == "create"
