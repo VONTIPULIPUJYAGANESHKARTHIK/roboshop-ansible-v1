@@ -1,22 +1,15 @@
-- name: Create EC2 instances and R53 records
+- name: create ec2 instances and r53 records
   hosts: local
   connection: local
-
   vars:
-    instances:
-      - mongodb
-      - redis
-      - mysql
-      - rabbitMQ
-
+    # ansible-playbook roboshop.yaml -e "instances=['mongodb', 'redis']"
+    # ansible-playbook roboshop.yaml -e "action=delete"
+    instances: ["mongodb", "redis", "mysql", "rabbitMQ"]
     action: create
     domain_name: gcart.store
     ami_id: ami-0055977a6e828a4f4
-    region: us-east-1
-
   tasks:
-    # Step 1: Create EC2 instances
-    - name: Create EC2 instances
+    - name: create ec2 instance
       amazon.aws.ec2_instance:
         name: "roboshop-{{ item }}"
         image_id: "{{ ami_id }}"
@@ -24,22 +17,42 @@
         security_groups:
           - roboshop-common
           - "roboshop-{{ item }}"
-        region: "{{ region }}"
-        state: present
+        region: us-east-1
       loop: "{{ instances }}"
       when: action == "create"
       register: ec2_output
 
-    # Step 2: Create Route 53 records
-    - name: Create Route 53 records
+    # - name: print ec2 creation output
+    #   debug:
+    #     msg: "{{ ec2_output }}"
+
+    - name: create R53 record
       amazon.aws.route53:
         state: present
         zone: "{{ domain_name }}"
-        record: "{{ item.item }}.{{ domain_name }}"
+        record: "{{ item.item }}.{{ domain_name }}" # mongodb.daws92s.store
         type: A
         ttl: 1
         value: "{{ item.instances[0].private_ip_address }}"
         overwrite: true
       loop: "{{ ec2_output.results }}"
-      when:
-        - action == "create"
+      when: action == "create"
+
+    - name: delete R53 records
+      amazon.aws.route53:
+        state: absent
+        zone: "{{ domain_name }}"
+        record: "{{ item }}.{{ domain_name }}"
+        ttl: 1
+        type: A
+      loop: "{{ instances }}"
+      when: action == "delete"
+
+    - name: delete ec2 instances
+      amazon.aws.ec2_instance:
+        state: absent
+        name: "roboshop-{{ item }}"
+        region: us-east-1
+        wait: false
+      loop: "{{ instances }}"
+      when: action == "delete"
