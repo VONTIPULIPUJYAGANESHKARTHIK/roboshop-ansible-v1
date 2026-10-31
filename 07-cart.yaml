@@ -27,15 +27,17 @@
         path: /app
         state: absent
 
-    - name: remove cart.zip
-      file:
-        path: /tmp/cart.zip
-        state: absent
-
     - name: create app directory
       file:
         path: /app
         state: directory
+        owner: roboshop
+        group: roboshop
+
+    - name: remove cart.zip
+      file:
+        path: /tmp/cart.zip
+        state: absent
 
     - name: download cart application
       get_url:
