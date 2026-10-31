@@ -39,7 +39,7 @@
 
     - name: download cart application
       get_url:
-        url: https://raw.githubusercontent.com/daws-92s/roboshop-documentation/refs/heads/main/artifacts/cart-{{ app_version }}.zip
+        url: https://raw.githubusercontent.com/daws-92s/roboshop-documentation/refs/heads/main/artifacts/cart.zip
         dest: /tmp/cart.zip
 
     - name: unzip cart
@@ -48,9 +48,14 @@
         dest: /app
         remote_src: yes
 
+    - name: set application permissions
+      file:
+        path: /app
+
     - name: install dependencies
       community.general.npm:
         path: /app
+      become_user: roboshop
 
     - name: copy cart service
       template:
