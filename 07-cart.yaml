@@ -1,6 +1,7 @@
 - name: configure cart server
   hosts: cart
   become: yes
+
   tasks:
     - name: disable default nodejs
       command: dnf module disable nodejs -y
@@ -36,6 +37,9 @@
       file:
         path: /app
         state: directory
+        owner: roboshop
+        group: roboshop
+        mode: "0755"
 
     - name: download cart application
       get_url:
@@ -51,11 +55,17 @@
     - name: set application permissions
       file:
         path: /app
+        owner: roboshop
+        group: roboshop
+        recurse: yes
 
     - name: install dependencies
       community.general.npm:
         path: /app
       become_user: roboshop
+      environment:
+        HOME: /app
+        npm_config_cache: /app/.npm
 
     - name: copy cart service
       template:
