@@ -1,6 +1,11 @@
 - name: configure user server
   hosts: user
   become: yes
+
+  vars:
+    redis_host: redis.gcart.store
+    mongodb_host: mongodb.gcart.store
+
   tasks:
     - name: disable default nodejs
       command: dnf module disable nodejs -y
@@ -52,10 +57,21 @@
       community.general.npm:
         path: /app
 
+    - name: set application ownership
+      file:
+        path: /app
+        owner: roboshop
+        group: roboshop
+        state: directory
+        recurse: yes
+
     - name: copy user service
       template:
         src: user.service.j2
         dest: /etc/systemd/system/user.service
+        owner: root
+        group: root
+        mode: "0644"
 
     - name: daemon reload
       systemd_service:
