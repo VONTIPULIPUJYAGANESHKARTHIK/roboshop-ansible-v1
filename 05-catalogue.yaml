@@ -1,6 +1,10 @@
 - name: configure catalogue server
   hosts: catalouge
   become: yes
+
+  vars:
+    mongodb_host: mongodb.gcart.store
+
   tasks:
     - name: disable default nodejs
       command: dnf module disable nodejs -y
@@ -52,6 +56,13 @@
       community.general.npm:
         path: /app
 
+    - name: set application ownership
+      file:
+        path: /app
+        owner: roboshop
+        group: roboshop
+        recurse: yes
+
     - name: copy catalogue service
       template:
         src: catalogue.service.j2
@@ -73,7 +84,7 @@
 
     - name: print product_count
       debug:
-        msg: "{{ product_count }}"
+        msg: "{{ product_count.stdout }}"
 
     - name: load the products
       shell: mongosh --host "{{ mongodb_host }}" < /app/db/master-data.js
@@ -85,6 +96,6 @@
 
     - name: start and enable catalogue
       service:
-        name: catalouge
+        name: catalogue
         state: restarted
         enabled: yes
