@@ -1,6 +1,7 @@
 - name: configure shipping server
   hosts: shipping
   become: yes
+
   tasks:
     - name: enable maven 3.9
       command: dnf module enable maven:3.9 -y
@@ -10,24 +11,8 @@
         name:
           - maven
           - java-25-openjdk-devel
-          - maven-openjdk25 # installing this so that we no need to set JAVA_HOME again
+          - maven-openjdk25
         state: present
-
-    # - name: find java25 path
-    #   shell: readlink -f $(ls /usr/lib/jvm/java-25-openjdk*/bin/java | head -1)
-    #   register: java25
-
-    # - name: print the output
-    #   debug:
-    #     msg: "{{ java25 }}"
-
-    # - name: make java25 as default
-    #   command: alternatives --set java {{ java25.stdout }}
-
-    # - name: set JAVA_HOME
-    #   copy:
-    #     content: "export JAVA_HOME={{ java25.stdout | dirname | dirname  }}"
-    #     dest: /etc/profile.d/java.sh
 
     - name: create roboshop system user
       user:
@@ -52,6 +37,9 @@
       file:
         path: /app
         state: directory
+        owner: roboshop
+        group: roboshop
+        mode: "0755"
 
     - name: download shipping application
       get_url:
@@ -64,13 +52,26 @@
         dest: /app
         remote_src: yes
 
-    - name: mvn version without JAVA_HOME
+    - name: set application permissions
+      file:
+        path: /app
+        owner: roboshop
+        group: roboshop
+        recurse: yes
+
+    - name: create maven cache directory
+      file:
+        path: /app/.m2
+        state: directory
+        owner: roboshop
+        group: roboshop
+        mode: "0755"
+
+    - name: check maven version
       command: mvn --version
-      args:
-        chdir: /app
       register: mvn_default
 
-    - name: print mvn version without JAVA_HOME
+    - name: print maven version
       debug:
         msg: "{{ mvn_default.stdout_lines }}"
 
@@ -78,5 +79,7 @@
       command: mvn clean package
       args:
         chdir: /app
-      # environment:
-      #   JAVA_HOME: "{{ java25.stdout | dirname | dirname  }}"
+      become_user: roboshop
+      environment:
+        HOME: /app
+        MAVEN_OPTS: "-Dmaven.repo.local=/app/.m2/repository"
