@@ -1,0 +1,24 @@
+- name: Configure Catalogue Server
+  hosts: catalogue
+  become: yes
+
+  tasks:
+    - name: Disable default Node.js
+      command: dnf module disable nodejs -y
+
+    - name: Enable Node.js 24
+      command: dnf module enable nodejs:24 -y
+
+    - name: Install Node.js
+      dnf:
+        name: nodejs
+        state: present
+
+    - name: Create Roboshop system user
+      user:
+        name: roboshop
+        create_home: false
+        home: /app
+        system: true
+        shell: /sbin/nologin
+        comment: "Roboshop system user"
