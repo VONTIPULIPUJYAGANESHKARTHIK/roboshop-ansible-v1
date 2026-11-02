@@ -1,2 +1,16 @@
 ansible_user: ec2-user
 ansible_password: DevOps321
+mongodb_host: mongodb.gcart.store
+redis_host: redis.gcart.store
+mysql_host: mysql.gcart.store
+rabbitmq_host: rabbitmq.gcart.store
+catalogue_host: catalogue.gcart.store
+user_host: user.gcart.store
+cart_host: cart.gcart.store
+shipping_host: shipping.gcart.store
+payment_host: payment.gcart.store
+mysql_root_password: RoboShop@1
+shipping_db_user: shipping
+shipping_db_password: RoboShop@1
+rabbitmq_user: roboshop
+rabbitmq_password: roboshop123
